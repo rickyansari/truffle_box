@@ -9,13 +9,12 @@ import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
-var proofOfExistanceInstance;
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      contractInstance: null,
+      truffleInstance: null,
       storageValue: 0,
       web3: null
     }
@@ -40,58 +39,19 @@ class App extends Component {
   }
 
   instantiateContract(update) {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-
-    // const contract = require('truffle-contract')
-    // const simpleStorage = contract(SimpleStorageContract)
-    
-    // simpleStorage.setProvider(this.state.web3.currentProvider)
-
-    // // Declaring this for later so we can chain functions on SimpleStorage.
-    // // var simpleStorageInstance
-
-    // // Get accounts.
-    // this.state.web3.eth.getAccounts((error, accounts) => {
-    //   simpleStorage.deployed().then((instance) => {
-    //     this.simpleStorageInstance = instance
-    //     console.log("simpleStorage", instance)
-    //     // Stores a given value, 5 by default.
-    //     return this.simpleStorageInstance.set(15, {from: accounts[0]})
-    //   }).then((result) => {
-    //     // Get the value from the contract to prove it worked.
-    //     return this.simpleStorageInstance.get.call(accounts[0])
-    //   }).then((result) => {
-    //     // Update state with the result.
-    //     return this.setState({ storageValue: result.c[0] })
-    //   }).catch((error)=>{
-    //     console.log("ERROR", error);
-    //   })
-    // })
-
     const contract = require('truffle-contract')
     const proofOfExistance = contract(ProofOfExistance)
-
     proofOfExistance.setProvider(this.state.web3.currentProvider);
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    // var simpleStorageInstance
-
+    var proofOfExistanceInstance;
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
       proofOfExistance.deployed().then((instance) => {
         proofOfExistanceInstance = instance;
-        update(instance);
-        console.log("simpleStorage", instance);
-        console.log("e");
-        // Stores a given value, 5 by default.
+        update(proofOfExistanceInstance);
+        // Validate document.
         return proofOfExistanceInstance.notarize('s2adsd', {from: accounts[0]})
       }).then((result) => {
         // Get the value from the contract to prove it worked.
-        console.log("result", result);
         var test = proofOfExistanceInstance.checkDocument('s3adsd').then((result)=>{
             console.log("response", result);
           })
@@ -102,12 +62,16 @@ class App extends Component {
     })
   }
 
-  updateInstance(instance){
+  updateInstance(truffleInstance){
     this.setState({
-      contractInstance: "asdkjas"
+      truffleInstance: truffleInstance
     });
-    //this.setState({contractInstance: {}})
-    console.log("this", "sdksj")
+  }
+
+  test(){
+    this.state.truffleInstance.checkDocument('s3adsd').then((response)=>{
+      console.log("resdponse", response);
+    })
   }
 
   render() {
@@ -120,7 +84,7 @@ class App extends Component {
           <main className="container">
             <div className="pure-g">
               <div className="pure-u-1-1">
-                <RaisedButton label="Default" style={{margin: 12}} onClick={this.test} />
+                <RaisedButton label="Default" style={{margin: 12}} onClick={this.test.bind(this)} />
                 <h1>Good to Go!</h1>
                 <p>Your Truffle Box is installed and ready.</p>
                 <h2>Smart Contract Example</h2>
