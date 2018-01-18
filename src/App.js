@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
 // import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
-import ProofOfExistance from '../build/contracts/ProofOfExistence4.json'
+import DocumentVerification from '../build/contracts/DocumentVerification.json'
 import getWeb3 from './utils/getWeb3'
 import RaisedButton from 'material-ui/RaisedButton';
+import TextField from 'material-ui/TextField';
+import {orange500, blue500} from 'material-ui/styles/colors';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 import './css/oswald.css'
@@ -15,43 +17,45 @@ class App extends Component {
     super(props)
     this.state = {
       truffleInstance: null,
-      storageValue: 0,
-      web3: null
+      web3: null,
+      verified: false,
+      checked: false,
+      verify_text:'',
+      check_text:'',
     }
   }
 
   componentWillMount() {
     // Get network provider and web3 instance.
     // See utils/getWeb3 for more info.
-    console.log("asidja")
     getWeb3
     .then(results => {
       this.setState({
         web3: results.web3
       })
       // Instantiate contract once web3 provided.
-      this.instantiateContract(this.updateInstance.bind(this))
+      this.instantiateContract(this.updateTruffleInstance.bind(this))
     })
     .catch(() => {
       console.log('Error finding web3.')
     })
   }
 
-  instantiateContract(update) {
+  instantiateContract(updateTruffleInstance) {
     const contract = require('truffle-contract')
-    const proofOfExistance = contract(ProofOfExistance)
-    proofOfExistance.setProvider(this.state.web3.currentProvider);
-    var proofOfExistanceInstance;
+    const documentVerification = contract(DocumentVerification)
+    documentVerification.setProvider(this.state.web3.currentProvider);
+    var documentVerificationInstance;
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
-      proofOfExistance.deployed().then((instance) => {
-        proofOfExistanceInstance = instance;
-        update(proofOfExistanceInstance);
+      documentVerification.deployed().then((instance) => {
+        documentVerificationInstance = instance;
+        updateTruffleInstance(documentVerificationInstance);
         // Validate document.
-        return proofOfExistanceInstance.notarize('s2adsd', {from: accounts[0]})
+        return documentVerificationInstance.notarize('s2adsd', {from: accounts[0]})
       }).then((result) => {
         // Get the value from the contract to prove it worked.
-        var test = proofOfExistanceInstance.checkDocument('s3adsd').then((result)=>{
+        var test = documentVerificationInstance.checkDocument('s3adsd').then((result)=>{
             console.log("response", result);
           })
         return test
@@ -61,16 +65,35 @@ class App extends Component {
     })
   }
 
-  updateInstance(truffleInstance){
+  updateTruffleInstance(truffleInstance){
     this.setState({
       truffleInstance: truffleInstance
     });
   }
 
-  test(){
+  checkDocument(){
     this.state.truffleInstance.checkDocument('s3adsd').then((response)=>{
       console.log("resdponse", response);
     })
+  }
+
+  verifyDocument(){
+    this.state.truffleInstance.verifyDocument(this.state.verify_text).then((response)=>{
+      console.log("resdponse", response);
+    })
+  }
+
+  handleChange(event){
+    this.setState({[event.target.name]: event.target.value})
+  }
+
+  renderResponseMessage(name){
+    if(this.state[name] && this.state[event.target.name]){
+      return null
+    } else{
+      console.log("SDSD")
+      return null
+    }
   }
 
   render() {
@@ -78,19 +101,32 @@ class App extends Component {
       <MuiThemeProvider>
         <div className="App">
           <nav className="navbar pure-menu pure-menu-horizontal">
-              <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
+              <a href="#" className="pure-menu-heading pure-menu-link">Document Verification</a>
           </nav>
           <main className="container">
-            <div className="pure-g">
-              <div className="pure-u-1-1">
-                <RaisedButton label="Default" style={{margin: 12}} onClick={this.test.bind(this)} />
-                <h1>Good to Go!</h1>
-                <p>Your Truffle Box is installed and ready.</p>
-                <h2>Smart Contract Example</h2>
-                <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-                <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-                <p>The stored value is: {this.state.storageValue}</p>
+            <div className="pure-g row">
+              <div className="pure-u-1-1" style={{marginTop: 30}}>
+                <TextField
+                  name="verify_text"
+                  floatingLabelText="Verify Document"
+                  floatingLabelStyle={{color: orange500}}
+                  floatingLabelFocusStyle={{color:blue500}}
+                  onChange={this.handleChange.bind(this)}
+                />
+                <RaisedButton label="Verify" style={{marginLeft:10}} onClick={this.verifyDocument.bind(this)} />
               </div>
+              {this.renderResponseMessage('verified')}
+              <div className="pure-u-1-1" style={{marginTop: 30}}>
+                <TextField
+                  name='check_text'
+                  floatingLabelText="Check Verified Document"
+                  floatingLabelStyle={{color: orange500}}
+                  floatingLabelFocusStyle={{color:blue500}}
+                  onChange={this.handleChange.bind(this)}
+                />
+                <RaisedButton label="Check" style={{margin: 5}} onClick={this.checkDocument.bind(this)} />
+              </div>
+              {this.renderResponseMessage('checked')}
             </div>
           </main>
         </div>
