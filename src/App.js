@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 // import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
-import DocumentVerification from '../build/contracts/DocumentVerification.json'
+import DocumentVerification from '../build/contracts/ProofOfExistence4.json'
 import getWeb3 from './utils/getWeb3'
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
@@ -22,6 +22,7 @@ class App extends Component {
       checked: false,
       verify_text:'',
       check_text:'',
+      accounts: null,
     }
   }
 
@@ -50,9 +51,13 @@ class App extends Component {
     this.state.web3.eth.getAccounts((error, accounts) => {
       documentVerification.deployed().then((instance) => {
         documentVerificationInstance = instance;
-        updateTruffleInstance(documentVerificationInstance);
+        updateTruffleInstance(instance, accounts);
         // Validate document.
-        return documentVerificationInstance.notarize('s2adsd', {from: accounts[0]})
+        var response = documentVerificationInstance.notarize('s2addsd', {from: accounts[0]})
+                        .then((resp)=>{
+                          console.log("response of verify Document call", resp);
+                        })
+        return response
       }).then((result) => {
         // Get the value from the contract to prove it worked.
         var test = documentVerificationInstance.checkDocument('s3adsd').then((result)=>{
@@ -65,20 +70,21 @@ class App extends Component {
     })
   }
 
-  updateTruffleInstance(truffleInstance){
+  updateTruffleInstance(truffleInstance, accounts){
     this.setState({
-      truffleInstance: truffleInstance
+      truffleInstance: truffleInstance,
+      accounts: accounts
     });
   }
 
   checkDocument(){
-    this.state.truffleInstance.checkDocument('s3adsd').then((response)=>{
+    this.state.truffleInstance.checkDocument(this.state.check_text).then((response)=>{
       console.log("resdponse", response);
     })
   }
 
   verifyDocument(){
-    this.state.truffleInstance.verifyDocument(this.state.verify_text).then((response)=>{
+    this.state.truffleInstance.notarize(this.state.verify_text,{from: this.state.accounts[0]}).then((response)=>{
       console.log("resdponse", response);
     })
   }

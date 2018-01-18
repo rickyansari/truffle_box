@@ -340,7 +340,7 @@
     "4447": {
       "events": {},
       "links": {},
-      "address": "0x9d075ae44d859191c121d7522da0cc3b104b8837"
+      "address": "0x345ca3e014aaf5dca488057592ee47305d9b3e10"
     },
     "1516109009667": {
       "events": {},
@@ -354,5 +354,5 @@
     }
   },
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-01-18T07:56:17.864Z"
+  "updatedAt": "2018-01-18T09:03:55.755Z"
 }

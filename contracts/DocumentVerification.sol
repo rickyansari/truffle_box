@@ -1,6 +1,6 @@
 pragma solidity ^0.4.15;
 
-// Proof of Existence contract, version 4
+// PDocumentVerification contract, version 1
 contract DocumentVerification {
   mapping (bytes32 => bool) private proofs;
 
@@ -30,4 +30,3 @@ contract DocumentVerification {
     return proofs[proof];
   }
 }
-

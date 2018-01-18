@@ -30,4 +30,3 @@ contract ProofOfExistence4 {
     return proofs[proof];
   }
 }
-
