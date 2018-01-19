@@ -28,14 +28,13 @@ class App extends Component {
   }
 
   componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
+    /* Get network provider and web3 instance. */
     getWeb3
     .then(results => {
       this.setState({
         web3: results.web3
       })
-      // Instantiate contract once web3 provided.
+      /* Instantiate contract once web3 provided. */
       this.instantiateContract(this.updateState.bind(this))
     })
     .catch(() => {
@@ -48,7 +47,7 @@ class App extends Component {
     const documentVerification = contract(DocumentVerification)
     documentVerification.setProvider(this.state.web3.currentProvider);
 
-    // Get accounts.
+    // Get accounts and truffleInstance.
     this.state.web3.eth.getAccounts((error, accounts) => {
       documentVerification.deployed().then((instance) => {
         setTruffleInstanceAndAccounts({
@@ -65,47 +64,28 @@ class App extends Component {
     this.setState(data);
   }
 
-
   handleDocumentVerification(){
-    this.verifyDocument().then((response)=>{
-      if(response.tx){
-        this.setState({
-          verify: true
-        })
-      }
-    })
-  }
-
-  verifyDocument(){
-    return this.state.truffleInstance
-      .verifyDocument(this.state.verify_text, { from: this.state.accounts[0] })
-      .then(response => {
-        return response
+    var updateVerifacationStatus = this.updateState.bind(this);
+    this.state.truffleInstance
+      .verifyDocument(this.state.verify_text, {from: this.state.accounts[0]})
+      .then((response) => {
+        if(response.tx){
+          updateVerifacationStatus({verify: true})
+        }
       }).catch((err)=>{
         console.log("Error while verifing Document");
       })
   }
 
-  handleDocumentChecking(){
-    this.checkDocument(this.updateState.bind(this)).then((response)=>{
-      if(response){
-        this.setState({
-          already_verified: response,
-          check: true
-        })
-      }
-    })
-  }
-
-  checkDocument(updateState){
-    return this.state.truffleInstance
+  handleDocumentChecking(updateState: Function = this.updateState.bind(this)){
+    var updateDocumentStatus = this.updateState.bind(this);
+    this.state.truffleInstance
       .checkDocument(this.state.check_text)
       .then((response) => {
-        updateState({
+        updateDocumentStatus({
           already_verified:response,
           check: true
         })
-        return response
       })
       .catch(err => {
         console.log("Error while checking document");
@@ -151,6 +131,7 @@ class App extends Component {
           floatingLabelText={data.text_input_label}
           floatingLabelStyle={{color: orange500}}
           floatingLabelFocusStyle={{color: blue500}}
+          inputStyle={{color: blue500}}
           onChange={this.handleChange.bind(this)}
         />
         <RaisedButton label={data.button_label} style={{marginLeft:10}} onClick={this[data.onButtonClick].bind(this)} />
@@ -163,21 +144,23 @@ class App extends Component {
       <MuiThemeProvider>
         <div className="App">
           <nav className="navbar pure-menu pure-menu-horizontal">
-              <a href="#" className="pure-menu-heading pure-menu-link">Document Verification</a>
+            <a href="#" className="pure-menu-heading pure-menu-link">Document Verification</a>
           </nav>
           <main className="container">
             <div className="pure-g row">
               {this.renderTextInputAndButton({
-                name:'verify_text',
-                text_input_label:'Verify Document',
                 button_label:'Verify',
-                onButtonClick:'handleDocumentVerification'})}
+                name:'verify_text',
+                onButtonClick:'handleDocumentVerification'
+                text_input_label:'Verify Document',
+              })}
               {this.renderResponseMessage('verify')}
               {this.renderTextInputAndButton({
-                name:'check_text',
-                text_input_label:'Check Verified Document',
                 button_label:'Check',
-                onButtonClick:'handleDocumentChecking'})}
+                name:'check_text',
+                onButtonClick:'handleDocumentChecking'
+                text_input_label:'Check Verified Document'
+              })}
               {this.renderResponseMessage('check')}
             </div>
           </main>
