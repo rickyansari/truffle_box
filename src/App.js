@@ -151,15 +151,15 @@ class App extends Component {
               {this.renderTextInputAndButton({
                 button_label:'Verify',
                 name:'verify_text',
-                onButtonClick:'handleDocumentVerification'
+                onButtonClick:'handleDocumentVerification',
                 text_input_label:'Verify Document',
               })}
               {this.renderResponseMessage('verify')}
               {this.renderTextInputAndButton({
                 button_label:'Check',
                 name:'check_text',
-                onButtonClick:'handleDocumentChecking'
-                text_input_label:'Check Verified Document'
+                onButtonClick:'handleDocumentChecking',
+                text_input_label:'Check Verified Document',
               })}
               {this.renderResponseMessage('check')}
             </div>
