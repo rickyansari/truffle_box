@@ -1,113 +1,142 @@
 import React, { Component } from 'react'
 // import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
-import ProofOfExistance from '../build/contracts/ProofOfExistence4.json'
+import DocumentVerification from '../build/contracts/DocumentVerification.json'
 import getWeb3 from './utils/getWeb3'
 import RaisedButton from 'material-ui/RaisedButton';
+import TextField from 'material-ui/TextField';
+import {orange500, blue500} from 'material-ui/styles/colors';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
-var proofOfExistanceInstance;
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      contractInstance: null,
-      storageValue: 0,
-      web3: null
+      truffleInstance: null,
+      web3: null,
+      verify: false,
+      check: false,
+      verify_text:'',
+      check_text:'',
+      accounts: null,
+      already_verified: false,
     }
   }
 
   componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
-    console.log("asidja")
+    /* Get network provider and web3 instance. */
     getWeb3
     .then(results => {
       this.setState({
         web3: results.web3
       })
-
-      // Instantiate contract once web3 provided.
-      this.instantiateContract(this.updateInstance.bind(this))
+      /* Instantiate contract once web3 provided. */
+      this.instantiateContract(this.updateState.bind(this))
     })
     .catch(() => {
       console.log('Error finding web3.')
     })
   }
 
-  instantiateContract(update) {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-
-    // const contract = require('truffle-contract')
-    // const simpleStorage = contract(SimpleStorageContract)
-    
-    // simpleStorage.setProvider(this.state.web3.currentProvider)
-
-    // // Declaring this for later so we can chain functions on SimpleStorage.
-    // // var simpleStorageInstance
-
-    // // Get accounts.
-    // this.state.web3.eth.getAccounts((error, accounts) => {
-    //   simpleStorage.deployed().then((instance) => {
-    //     this.simpleStorageInstance = instance
-    //     console.log("simpleStorage", instance)
-    //     // Stores a given value, 5 by default.
-    //     return this.simpleStorageInstance.set(15, {from: accounts[0]})
-    //   }).then((result) => {
-    //     // Get the value from the contract to prove it worked.
-    //     return this.simpleStorageInstance.get.call(accounts[0])
-    //   }).then((result) => {
-    //     // Update state with the result.
-    //     return this.setState({ storageValue: result.c[0] })
-    //   }).catch((error)=>{
-    //     console.log("ERROR", error);
-    //   })
-    // })
-
+  instantiateContract(setTruffleInstanceAndAccounts) {
     const contract = require('truffle-contract')
-    const proofOfExistance = contract(ProofOfExistance)
+    const documentVerification = contract(DocumentVerification)
+    documentVerification.setProvider(this.state.web3.currentProvider);
 
-    proofOfExistance.setProvider(this.state.web3.currentProvider);
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    // var simpleStorageInstance
-
-    // Get accounts.
+    // Get accounts and truffleInstance.
     this.state.web3.eth.getAccounts((error, accounts) => {
-      proofOfExistance.deployed().then((instance) => {
-        proofOfExistanceInstance = instance;
-        update(instance);
-        console.log("simpleStorage", instance);
-        console.log("e");
-        // Stores a given value, 5 by default.
-        return proofOfExistanceInstance.notarize('s2adsd', {from: accounts[0]})
-      }).then((result) => {
-        // Get the value from the contract to prove it worked.
-        console.log("result", result);
-        var test = proofOfExistanceInstance.checkDocument('s3adsd').then((result)=>{
-            console.log("response", result);
-          })
-        return test
+      documentVerification.deployed().then((instance) => {
+        setTruffleInstanceAndAccounts({
+          truffleInstance: instance,
+          accounts: accounts
+        })
       }).catch((error)=>{
-        console.log("ERROR", error);
+        console.log("ERROR ", error);
       })
     })
   }
 
-  updateInstance(instance){
+  updateState(data: Object){
+    this.setState(data);
+  }
+
+  handleDocumentVerification(){
+    var updateVerifacationStatus = this.updateState.bind(this);
+    this.state.truffleInstance
+      .verifyDocument(this.state.verify_text, {from: this.state.accounts[0]})
+      .then((response) => {
+        if(response.tx){
+          updateVerifacationStatus({verify: true})
+        }
+      }).catch((err)=>{
+        console.log("Error while verifing Document");
+      })
+  }
+
+  handleDocumentChecking(updateState: Function = this.updateState.bind(this)){
+    var updateDocumentStatus = this.updateState.bind(this);
+    this.state.truffleInstance
+      .checkDocument(this.state.check_text)
+      .then((response) => {
+        updateDocumentStatus({
+          already_verified:response,
+          check: true
+        })
+      })
+      .catch(err => {
+        console.log("Error while checking document");
+      });
+  }
+
+  handleChange(event){
+    var message_state =  event.target.name.substring(0, event.target.name.length-5)
     this.setState({
-      contractInstance: "asdkjas"
-    });
-    //this.setState({contractInstance: {}})
-    console.log("this", "sdksj")
+      [event.target.name]: event.target.value,
+      [message_state]: false
+    })
+  }
+
+  renderResponseMessage(name){
+    var message;
+    if(name === 'verify'){
+      message = this.state.verify
+                  ? "The Document Verified Successfully."
+                  : "Unable to verify the Document.";
+    }else{
+      message = this.state.already_verified
+                 ? "The Document is verified."
+                 : "The Document need to be verified.";
+    }
+
+    if(this.state[name]){
+      return(
+        <div className="pure-u-1-1" style={{marginTop: 30}}>
+          <h2 style={{marginLeft:10}}> {message} </h2>
+        </div>
+      )
+    } else{
+      return null
+    }
+  }
+
+  renderTextInputAndButton(data: Object){
+    return(
+      <div className="pure-u-1-1" style={{marginTop: 30}}>
+        <TextField
+          name={data.name}
+          floatingLabelText={data.text_input_label}
+          floatingLabelStyle={{color: orange500}}
+          floatingLabelFocusStyle={{color: blue500}}
+          inputStyle={{color: blue500}}
+          onChange={this.handleChange.bind(this)}
+        />
+        <RaisedButton label={data.button_label} style={{marginLeft:10}} onClick={this[data.onButtonClick].bind(this)} />
+      </div>
+    )
   }
 
   render() {
@@ -115,19 +144,24 @@ class App extends Component {
       <MuiThemeProvider>
         <div className="App">
           <nav className="navbar pure-menu pure-menu-horizontal">
-              <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
+            <a href="#" className="pure-menu-heading pure-menu-link">Document Verification</a>
           </nav>
           <main className="container">
-            <div className="pure-g">
-              <div className="pure-u-1-1">
-                <RaisedButton label="Default" style={{margin: 12}} onClick={this.test} />
-                <h1>Good to Go!</h1>
-                <p>Your Truffle Box is installed and ready.</p>
-                <h2>Smart Contract Example</h2>
-                <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-                <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-                <p>The stored value is: {this.state.storageValue}</p>
-              </div>
+            <div className="pure-g row">
+              {this.renderTextInputAndButton({
+                button_label:'Verify',
+                name:'verify_text',
+                onButtonClick:'handleDocumentVerification',
+                text_input_label:'Verify Document',
+              })}
+              {this.renderResponseMessage('verify')}
+              {this.renderTextInputAndButton({
+                button_label:'Check',
+                name:'check_text',
+                onButtonClick:'handleDocumentChecking',
+                text_input_label:'Check Verified Document',
+              })}
+              {this.renderResponseMessage('check')}
             </div>
           </main>
         </div>
